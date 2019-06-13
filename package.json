@@ -1,0 +1,38 @@
+{
+  "name": "sipjs-webrtc-phone",
+  "version": "0.0.1",
+  "description": "HTML5 SIP phone WebRTC based on SIP.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alepolidori/sipjs-webrtc-phone.git"
+  },
+  "keywords": [
+    "webrtc",
+    "sip",
+    "phone",
+    "html5",
+    "sipjs",
+    "rtp",
+    "srtp",
+    "audio",
+    "video",
+    "phone-calls",
+    "javscript",
+    "asterisk",
+    "nethserver",
+    "freepbx",
+    "voip",
+    "pbx"
+  ],
+  "author": "Alessandro Polidori",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/alepolidori/sipjs-webrtc-phone/issues"
+  },
+  "homepage": "https://github.com/alepolidori/sipjs-webrtc-phone#readme",
+  "dependencies": {
+    "bootstrap": "^4.1.3",
+    "jquery": "^3.3.1",
+    "sip.js": "^0.14.4"
+  }
+}
