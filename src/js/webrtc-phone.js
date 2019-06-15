@@ -12,56 +12,35 @@ let webrtcPhone = (() => {
   let counterpartNum;
   let rtcSession;
   let socket;
+  let remoteStreamAudio;
 
   let initAndLogin = data => {
-    if (DEBUG) {
-      JsSIP.debug.enable('JsSIP:*');
-    } else {
-      JsSIP.debug.disable('JsSIP:*');
-    }
+    // if (DEBUG) {
+    //   JsSIP.debug.enable('JsSIP:*');
+    // } else {
+    //   JsSIP.debug.disable('JsSIP:*');
+    // }
+    remoteStreamAudio = $('#' + data.audioId).get(0);
     name = data.name;
     exten = data.exten;
     server = data.server;
     password = data.password;
     url = 'wss://' + server + ':8089/ws';
-    try {
-      socket = new JsSIP.WebSocketInterface(url);
-    } catch (error) {
-      console.error(error);
-      return;
-    }
     let configuration = {
-      realm: server,
-      sockets: [socket],
+      uri: exten + '@' + server,
+      transportOptions: {
+        wsServers: [ url ]
+      },
+      authorizationUser: exten,
       password: password,
-      display_name: name,
-      uri: 'sip:' + exten + '@' + server,
-      no_answer_timeout: 10,
-      user_agent: 'sip client JsSIP',
-      authorization_user: exten,
-      contact_uri: 'sip:' + exten + '@' + server,
-      registrar_server: server
+      iceServers: ''
     };
     try {
-      phone = new JsSIP.UA(configuration);
+      phone = new SIP.UA(configuration);
     } catch (error) {
-      console.log('aaaaaaaaaaaa');
-      
       console.error(error);
       return;
     }
-    phone.on('connecting', e => {
-      console.log('connecting...');
-      console.log(e);
-    });
-    phone.on('connected', e => {
-      console.log('connected');
-      console.log(e);
-    });
-    phone.on('disconnected', e => {
-      console.log('disconnected');
-      console.log(e);
-    });
     phone.on('registered', e => {
       console.log('registered');
       console.log(e);
@@ -76,174 +55,101 @@ let webrtcPhone = (() => {
       console.log('registrationFailed');
       console.log(e);
     });
-    phone.on('sipEvent', e => {
-      console.log('sipEvent');
+    phone.on('invite', session => {
+      console.log('invite');
+      console.log(session);
+      rtcSession = session;
+      $(document).trigger('incomingcall', counterpartNum);
+    });
+    phone.on('message', e => {
+      console.log('message');
       console.log(e);
     });
-    phone.on('newRTCSession', e => {
-      console.log('newRTCSession');
+    phone.on('outOfDialogReferRequested', e => {
+      console.log('outOfDialogReferRequested');
       console.log(e);
-
-
-
-
-      rtcSession = e.session;
-      
-      rtcSession.on('peerconnection', e => {
-        console.log('peerconnection');
-        console.log(e);
-      });
-      rtcSession.on('connecting', e => {
-        console.log('connecting');
-        console.log(e);
-      });
-      rtcSession.on('sending', e => {
-        console.log('sending');
-        console.log(e);
-      });
-      rtcSession.on('progress', e => {
-        console.log('progress');
-        console.log(e);
-        $(document).trigger('calling');
-      });
-      rtcSession.on('accepted', e => {
-        console.log('accepted');
-        console.log(e);
-        $(document).trigger('callaccepted');
-      });
-      rtcSession.on('confirmed', e => {
-        console.log('confirmed');
-        console.log(e);
-        $(document).trigger('callaccepted');
-      });
-      
-      rtcSession.on('ended', e => {
-        console.log('ended');
-        console.log(e);
-        $(document).trigger('hangup');
-      });
-      rtcSession.on('failed', e => {
-        console.log('failed');
-        console.log(e);
-        phone.terminateSessions();
-        $(document).trigger('hangup');
-      });
-      rtcSession.on('newDTMF', e => {
-        console.log('newDTMF');
-        console.log(e);
-      });
-      rtcSession.on('newInfo', e => {
-        console.log('newInfo');
-        console.log(e);
-      });
-      rtcSession.on('hold', e => {
-        console.log('hold');
-        console.log(e);
-      });
-      rtcSession.on('unhold', e => {
-        console.log('unhold');
-        console.log(e);
-      });
-      rtcSession.on('muted', e => {
-        console.log('muted');
-        console.log(e);
-      });
-      rtcSession.on('unmuted', e => {
-        console.log('unmuted');
-        console.log(e);
-      });
-      rtcSession.on('reinvite', e => {
-        console.log('reinvite');
-        console.log(e);
-      });
-      rtcSession.on('update', e => {
-        console.log('update');
-        console.log(e);
-      });
-      rtcSession.on('refer', e => {
-        console.log('refer');
-        console.log(e);
-      });
-      rtcSession.on('replaces', e => {
-        console.log('replaces');
-        console.log(e);
-      });
-      rtcSession.on('sdp', e => {
-        console.log('sdp');
-        console.log(e);
-      });
-      rtcSession.on('icecandidate', e => {
-        console.log('icecandidate');
-        console.log(e);
-      });
-      rtcSession.on('getusermediafailed', e => {
-        console.log('getusermediafailed');
-        console.log(e);
-      });
-      rtcSession.on('peerconnection:createofferfailed', e => {
-        console.log('peerconnection:createofferfailed');
-        console.log(e);
-      });
-      rtcSession.on('peerconnection:createanswerfailed', e => {
-        console.log('peerconnection:createanswerfailed');
-        console.log(e);
-      });
-      rtcSession.on('peerconnection:setlocaldescriptionfailed', e => {
-        console.log('peerconnection:setlocaldescriptionfailed');
-        console.log(e);
-      });
-      rtcSession.on('peerconnection:setremotedescriptionfailed', e => {
-        console.log('peerconnection:setremotedescriptionfailed');
-        console.log(e);
-      });
-      if (e.originator === 'remote') {
-        $(document).trigger('incomingcall', counterpartNum);
-      }
+    });
+    phone.on('transportCreated', e => {
+      console.log('transportCreated');
+      console.log(e);
     });
     phone.start();
   };
 
   let logout = () => {
-    // phone.unregister();
-    phone.stop(); // includes unregister call
+    phone.unregister();
   };
 
   let call = (to, video) => {
     let options = {
-      mediaConstraints: {
-        audio: true,
-        video: video
-      },
-      pcConfig: {
-        iceServers: []
+      sessionDescriptionHandlerOptions: {
+        constraints: {
+          audio: true,
+          video: video
+        }
       }
+      // pcConfig: {
+      //   iceServers: []
+      // }
     };
     counterpartNum = to;
     try {
-      rtcSession = phone.call('sip:' + to + '@' + server, options);
+      rtcSession = phone.invite(to + '@' + server);
+      rtcSession.on('trackAdded', () => {
+        let pc = rtcSession.sessionDescriptionHandler.peerConnection;
+        let remoteStream = new MediaStream();
+        pc.getReceivers().forEach((receiver) => {
+          remoteStream.addTrack(receiver.track);
+        });
+        remoteStreamAudio.srcObject = remoteStream;
+        // remoteStreamAudio.play();
+
+
+        // Gets remote tracks
+        // var remoteStream = new MediaStream();
+        // pc.getReceivers().forEach(function (receiver) {
+        //   remoteStream.addTrack(receiver.track);
+        // });
+        // remoteVideo.srcObject = remoteStream;
+        // remoteVideo.play();
+
+        // // Gets local tracks
+        // var localStream = new MediaStream();
+        // pc.getSenders().forEach(function (sender) {
+        //   localStream.addTrack(sender.track);
+        // });
+        // localVideo.srcObject = localStream;
+        // localVideo.play();
+      });
     } catch (error) {
       console.error(error);
     }
   };
 
   let answer = () => {
-    let options = {
-      mediaConstraints: {
-        audio: true,
-        video: false
-      }
-    };
-    rtcSession.answer(options);
+    rtcSession.accept();
+
+    rtcSession.on('trackAdded', () => {
+      let pc = rtcSession.sessionDescriptionHandler.peerConnection;
+      let remoteStream = new MediaStream();
+      pc.getReceivers().forEach((receiver) => {
+        remoteStream.addTrack(receiver.track);
+      });
+      remoteStreamAudio.srcObject = remoteStream;
+      // remoteStreamAudio.play();
+
+
+    });
     $(document).trigger('callaccepted');
   };
 
   let hangup = e => {
-    phone.terminateSessions();
+    rtcSession.terminate();
     $(document).trigger('hangup');
   };
 
   let getCounterpartNum = () => {
-    return rtcSession.remote_identity._uri._user;
+    return rtcSession.remoteIdentity._displayName + ' ' + rtcSession.remoteIdentity.uri.user;
   };
 
   return {
