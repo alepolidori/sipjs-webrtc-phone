@@ -12,14 +12,13 @@ let webrtcPhone = (() => {
   let counterpartNum;
   let rtcSession;
   let remoteStreamAudio;
+  let remoteStreamVideo;
+  let localStreamVideo;
 
   let initAndLogin = data => {
-    // if (DEBUG) {
-    //   JsSIP.debug.enable('JsSIP:*');
-    // } else {
-    //   JsSIP.debug.disable('JsSIP:*');
-    // }
     remoteStreamAudio = $('#' + data.audioId).get(0);
+    remoteStreamVideo = $('#' + data.remoteVideoId).get(0);
+    localStreamVideo = $('#' + data.localVideoId).get(0);
     name = data.name;
     exten = data.exten;
     server = data.server;
@@ -109,8 +108,6 @@ let webrtcPhone = (() => {
     counterpartNum = to;
     try {
       rtcSession = phone.invite(to + '@' + server);
-
-      
     } catch (error) {
       console.error(error);
     }
@@ -118,8 +115,16 @@ let webrtcPhone = (() => {
   };
 
   let answer = () => {
-    rtcSession.accept();
+    let options =  {
+      sessionDescriptionHandlerOptions: {
+        constraints: {
+          audio: true,
+          video: true
+        }
+      }
+    };
     attachEvtListeners();
+    rtcSession.accept(options);
   };
 
   let hangup = e => {
@@ -188,29 +193,19 @@ let webrtcPhone = (() => {
     });
     rtcSession.on('trackAdded', () => {
       let pc = rtcSession.sessionDescriptionHandler.peerConnection;
+
       let remoteStream = new MediaStream();
       pc.getReceivers().forEach((receiver) => {
         remoteStream.addTrack(receiver.track);
       });
-      remoteStreamAudio.srcObject = remoteStream;
-      // remoteStreamAudio.play();
+      // remoteStreamAudio.srcObject = remoteStream;
+      remoteStreamVideo.srcObject = remoteStream;
 
-
-      // Gets remote tracks
-      // var remoteStream = new MediaStream();
-      // pc.getReceivers().forEach(function (receiver) {
-      //   remoteStream.addTrack(receiver.track);
-      // });
-      // remoteVideo.srcObject = remoteStream;
-      // remoteVideo.play();
-
-      // // Gets local tracks
-      // var localStream = new MediaStream();
-      // pc.getSenders().forEach(function (sender) {
-      //   localStream.addTrack(sender.track);
-      // });
-      // localVideo.srcObject = localStream;
-      // localVideo.play();
+      var localStream = new MediaStream();
+      pc.getSenders().forEach(function (sender) {
+        localStream.addTrack(sender.track);
+      });
+      localStreamVideo.srcObject = localStream;
     });
     rtcSession.on('bye', e => {
       console.log('bye');
